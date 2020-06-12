@@ -1,0 +1,22 @@
+<body>
+  Hi
+<pre>
+args: {{ request.args }}
+base_url: {{ request.base_url }}
+data: {{ request.data }}
+form: {{ request.form }}
+full_path: {{ request.full_path }}
+headers: {{ request.headers }}
+path: {{ request.path }}
+url: {{ request.url }}
+values: {{ request.values }}
+</pre>
+
+<p><b>User:</b> {{ request.headers.get("User") }}</p>
+<p><b>Email:</b> {{ request.headers.get("Email") }}</p>
+<p><b>Userid:</b> {{ request.headers.get("Userid") }}</p>
+
+<form method="post">
+  <input type="text" id="q" value="asdf">
+  <button type="submit">Post</button>
+</body>

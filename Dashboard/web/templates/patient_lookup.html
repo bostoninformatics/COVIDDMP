@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block header %}
+ Patient Lookup
+{% endblock %}
+
+{% block content %}
+  <h1>New/Edit Person</h1>
+  <p>To add a new person or edit an existing person's COVID information, first look the person up using the form below. In most cases, information can be prepopulated from VISTA. If the person is not found, you may add a new person using the link that will appear below after you search for them.</p>
+  <div class="border border-info rounded bg-light p-3">
+    <form method="get" onchange="this.submit()">
+      <div class="form-row">
+        <div class="col">
+          <div class="form-group">
+            <label>{{ form.SSN4.label }}</label>
+            {{ form.SSN4(class_="form-control") }}
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label>{{ form.LastName.label }}</label>
+            {{ form.LastName(class_="form-control") }}
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label>{{ form.FirstName.label }}</label>
+            {{ form.FirstName(class_="form-control") }}
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label>{{ form.DOB.label }}</label>
+            {{ form.DOB(class_="form-control render-datepicker") }}
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+              <label>{{ form.PersonType.label }}</label>
+              {{ form.PersonType(class_="form-control") }}
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label>{{ form.PersonID.label }}</label>
+            {{ form.PersonID(class_="form-control") }}
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="col">
+          <button type="submit" class="btn btn-primary w-100">Search</button>
+        </div>
+      </div>
+    </form>
+  </div>
+  {% if result["has_form_data"] %}
+    <div class="mt-3">
+      <table id="patient_search_table" class="render-datatable table table-sm" data-order="[[1, &quot;asc&quot;], [2, &quot;asc&quot;]]" data-searching="false" data-length-change="false">
+        <thead>
+          <tr>
+            <th>SSN4</th>
+            <th>Last Name</th>
+            <th>First Name</th>
+            <th>Date of Birth</th>
+            <th>Person Type</th>
+            <th>Edit</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for _, row in result["tb"].iterrows() %}
+          <tr>
+            <td>{{row.SSN4}}</td>
+            <td>{{row.LastName}}</td>
+            <td>{{row.FirstName}}</td>
+            <td>{{row.DOB}}</td>
+            <td>{{row.PersonType}}</td>
+            <td><a href="/dashboard/patient_edit?PersonID={{row.PersonID}}&NextURL={{next_url}}">Edit</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-3 alert alert-primary">
+      Or, <a href="/dashboard/patient_add?LastName={{ form.LastName.data }}">add new patient</a>.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block header %}
+  Edit Patient Tracked Status
+{% endblock %}
+
+{% block content %}
+  <h1>Edit Patient Tracked Status</h1>
+
+  <div class="row">
+    <div class="col">
+      <div class="border border-info rounded bg-light p-3">
+        <form method="GET" action="/dashboard/patient_tracked_status_post">
+          <div class="form-row">
+            Is the patient being tracked? Please update their status below and click Save.
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+               {{form.Tracked(class_="form-control") }}
+               {{form.PersonID(class_="text_blob", value=form.PersonID.data)}}
+               {{form.NextURL(class_="text_blob", value=form.NextURL.data)}}
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+               {{form.Comment(placeholder="Provide any additional comments here", rows=10, cols=100)}}
+            </div>
+          </div>
+          <div class="form-row">
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="border border-info rounded bg-light p-3">
+        <h3>Patient</h3>
+        {{ patient[[
+              "SSN4",
+              "FirstName",
+              "LastName",
+              "MostRecentTestDateTime",
+              "MostRecentTestResult"]].transpose().to_html(header=False, classes="table table-sm") | safe }}
+      </div>
+    </div>
+  </div>
+
+  <div class="border border-info rounded bg-light p-3 mt-3">
+    <h3>History</h3>
+    {{ result["historical"].sort_values("UpdatedDateTime", ascending=False).to_html(classes="table table-sm", index=False) | safe }}
+  </div>
+
+</div>
+
+{% endblock %}

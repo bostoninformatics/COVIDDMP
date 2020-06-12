@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  Provider Search
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-sm-4">
+      <form method="get">
+
+        <div class="form-group">
+          <label for="npi">NPI</label>
+          <input type="text" class="form-control" id="npi" aria-describedby="npi-help" value="{{ request.args.get("npi", default="") }}">
+          <small id="npi-help" class="form-text text-muted">The national provider id</small>
+        </div>
+
+        <div class="form-group">
+          <label for="fname">First Name</label>
+          <input type="text" class="form-control" id="fname" value="{{ request.args.get("fname", default="") }}">
+        </div>
+
+        <div class="form-group">
+          <label for="lname">Last Name</label>
+          <input type="text" class="form-control" id="lname" value="{{ request.args.get("lname", default="") }}">
+        </div>
+
+        <div class="form-group">
+          <label for="city">City</label>
+          <input type="text" class="form-control" id="city" value="{{ request.args.get("city", default="") }}">
+        </div>
+
+        <div class="form-group">
+          <label for="state">State</label>
+          <input type="text" class="form-control" id="state" value="{{ request.args.get("state", default="") }}">
+        </div>
+
+        <button type="submit" class="btn btn-primary">Search</button>
+
+      </form>
+    </div>
+
+    <div class="col-sm-8">
+      <p></p>
+
+      {% if (request.args.get("npi", default="") == "" and
+             request.args.get("fname", default="") == "" and
+             request.args.get("lname", default="") == "" and
+             request.args.get("city", default="") == "" and
+             request.args.get("state", default="") == "") %}
+      Enter search above, or <a href="/provider_search?city=Madison">click here for an example search</a>.
+      {% else %}
+      <div class="row">
+      <div class="col">
+      <table class="render-datatable table">
+        <thead>
+          <tr>
+            <th>NPI</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>City</th>
+            <th>State</th>
+            <th>Detail</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in result["providers"] %}
+          <tr>
+            <td>{{item.npi}}</td>
+            <td>{{item.fname}}</td>
+            <td>{{item.lname}}</td>
+            <td>{{item.city}}</td>
+            <td>{{item.state}}</td>
+            <td><a href="/provider?npi={{item.npi}}">Detail</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

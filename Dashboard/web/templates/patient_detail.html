@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block header %}
+  Patient Detail
+{% endblock %}
+
+{% block content %}
+  <h1>Patient Detail</h1>
+
+  <div class="border border-info rounded bg-light p-3 mb-3"> 
+  <h2>Summary</h2>
+  {{ result["Patient"].to_html(classes="table table-responsive", border=1, index=False) | safe }}
+  {{ result["Admit"].to_html(classes="table table-responsive", border=1, index=False) | safe }}
+  </div>
+  
+  <div class="border border-info rounded bg-light p-3 mb-3" id="test-results">
+  <h2>COVID Lab Orders and Results</h2>
+  {{ result["Order_Results"].to_html(classes="table table-responsive", border=1, index=False) | safe }}
+  </div>
+
+  <div class="border border-info rounded bg-light p-3 mb-3">
+  <h2>COVID Symptoms Entered by User</h2>
+  {{ result["Symptoms_User"].to_html(classes="table table-responsive", border=1, index=False) | safe }}
+  </div>
+
+  <div class="border border-info rounded bg-light p-3 mb-3">
+  <h2>COVID Symptoms From CDW</h2>
+  {{ result["Symptoms_CDW"].to_html(classes="table table-responsive", border=1, index=False) | safe }}
+  </div>
+  
+  <div class="border border-info rounded bg-light p-3 mb-3">
+  <h2>Inpatient Visits</h2>
+  {{ result["InpatientVisits"].to_html(classes="table table-responsive", border=1, index=False) | safe }}
+  </div>
+
+{% endblock %}

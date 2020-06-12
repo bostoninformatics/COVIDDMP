@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block header %}
+  Patient Add
+{% endblock %}
+
+{% block content %}
+  <h1>Patient Add</h1>
+  <div class="border border-info rounded bg-light p-3">
+    <form method="post">
+      <div class="form-row">
+        <div class="col">
+          <div class="form-group">
+            <label>{{ form.SSN.label }}</label>
+            {{ form.SSN(class_="form-control") }}
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label>{{ form.LastName.label }}</label>
+            {{ form.LastName(class_="form-control") }}
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="col">
+          <button type="submit" class="btn btn-primary w-100">Add Patient</button>
+        </div>
+      </div>
+    </form>
+  </div>
+{% endblock %}

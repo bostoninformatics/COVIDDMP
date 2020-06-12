@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block header %}
+ Summary of Pending Patients
+{% endblock %}
+
+{% block content %}
+
+  <div class="border border-info rounded bg-light p-3 mb-3"> 
+  <h2>Summary for VA Boston (Station = 523)</h2>
+  {{ result.to_html(classes="table table-responsive", border=1, index=False) | safe }}
+  </div>
+  
+
+{% endblock %}

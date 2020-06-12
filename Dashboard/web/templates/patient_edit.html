@@ -1,0 +1,919 @@
+{% extends "base.html" %}
+
+{% block header %}
+  Edit Patient
+{% endblock %}
+
+
+
+{# These are from http://bear-z.com/python/render-bootstrap-3-forms-with-wtforms-and-jinja/ #}
+
+{# Renders field for bootstrap 4 standards.
+
+    Params:
+        field - WTForm field
+        kwargs - pass any arguments you want in order to put them into the html attributes.
+        There are few exceptions: for - for_, class - class_, class__ - class_
+
+    Example usage:
+        {{ macros.render_field(form.email, placeholder='Input email', type='email') }}
+#}
+{% macro render_field(field, label_visible=true, field_class='') -%}
+
+    <div class="form-group {{ kwargs.pop('class_', '') }}">
+        {% if (field.type != 'HiddenField' and field.type !='CSRFTokenField') and label_visible %}
+            <label for="{{ field.id }}">{{ field.label }}</label>
+        {% endif %}
+        {% if field.errors %}
+            {{ field(class_='form-control ' + field_class, **kwargs) }}
+            <div class="text-danger">
+                {% for e in field.errors %}
+                    <div>{{ e }}</div>
+                {% endfor %}
+            </div>
+        {% else %}
+            {{ field(class_='form-control ' + field_class, **kwargs) }}
+        {% endif %}
+    </div>
+{%- endmacro %}
+
+{% macro render_select2(field, label_visible=true) -%}
+
+    <div class="form-group {{ kwargs.pop('class_', '') }}">
+        {% if (field.type != 'HiddenField' and field.type !='CSRFTokenField') and label_visible %}
+            <label for="{{ field.id }}">{{ field.label }}</label>
+        {% endif %}
+        {% if field.errors %}
+            {{ field(class_='select2 form-control form-control-lg', **kwargs) }}
+            <div class="text-danger">
+                {% for e in field.errors %}
+                    <div>{{ e }}</div>
+                {% endfor %}
+            </div>
+        {% else %}
+            {{ field(class_='select2 form-control form-control-lg', **kwargs) }}
+        {% endif %}
+    </div>
+{%- endmacro %}
+
+{# Renders checkbox fields since they are represented differently in bootstrap
+    Params:
+        field - WTForm field (there are no check, but you should put here only BooleanField.
+        kwargs - pass any arguments you want in order to put them into the html attributes.
+        There are few exceptions: for - for_, class - class_, class__ - class_
+
+    Example usage:
+        {{ macros.render_checkbox_field(form.remember_me) }}
+ #}
+{% macro render_checkbox_field(field) -%}
+    <div class="form-group {{ kwargs.pop('class_', '') }}">
+        <div class="form-check">
+            <label>
+                {{ field(type='checkbox', **kwargs) }} {{ field.label }}
+            </label>
+        </div>
+    </div>
+{%- endmacro %}
+
+{# Renders radio field
+    Params:
+        field - WTForm field (there are no check, but you should put here only BooleanField.
+        kwargs - pass any arguments you want in order to put them into the html attributes.
+        There are few exceptions: for - for_, class - class_, class__ - class_
+
+    Example usage:
+        {{ macros.render_radio_field(form.answers) }}
+ #}
+{% macro render_radio_field(field) -%}
+    {% for value, label, _ in field.iter_choices() %}
+        <div class="radio">
+            <label>
+                <input type="radio" name="{{ field.id }}" id="{{ field.id }}" value="{{ value }}">{{ label }}
+            </label>
+        </div>
+    {% endfor %}
+{%- endmacro %}
+
+{% block content %}
+  <form method="post" autocomplete="off">
+
+    <div class="row">
+    <div class="col-3">
+      <div class="sticky-top pt-3">
+        <div id="edit-patient-list" class="list-group">
+          {{form.NextURL(class_="text_blob")}}
+          <a class="list-group-item list-group-item-action" href="#edit-patient-general">General</a>
+          <a class="list-group-item list-group-item-action" href="#edit-patient-person-information">Person Information</a>
+          <a class="list-group-item list-group-item-action" href="#edit-patient-if-patient">If Patient...</a>
+          <a class="list-group-item list-group-item-action" href="#edit-patient-if-employee">If Employee...</a>
+          <a class="list-group-item list-group-item-action" href="#edit-patient-contacted-status">Contacted Status</a>
+          <a class="list-group-item list-group-item-action" href="#edit-patient-test-information">Test Information</a>
+          <a class="list-group-item list-group-item-action" href="#edit-patient-quarantine">Quarantine/Return to Work Status</a>
+          <a class="list-group-item list-group-item-action" href="#edit-patient-location">Location</a>
+          <a class="list-group-item list-group-item-action" href="#edit-patient-exposure">Exposure</a>
+          <a class="list-group-item list-group-item-action" href="#edit-patient-symptoms">Symptoms</a>
+          <a class="list-group-item list-group-item-action" href="#edit-patient-study">Study</a>
+        </div>
+        <div class="mt-3">
+          <button type="submit" class="btn btn-primary w-100">Update</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+
+      {% for field, errors in form.errors.items() %}
+        <div class="alert alert-danger" role="alert">
+          {{ form[field].label }}: {{ ', '.join(errors) }}
+        </div>
+      {% endfor %}
+
+      <div class="border border-info rounded bg-light p-3 mb-3">
+        <h2 id="edit-patient-general">General</h2>
+        <div class="row">
+          <div class="col-md-3">
+            <div class="row">
+              <div class="col">{{ render_select2(form.DataEntryLocationID, class_="col") }}</div>
+            </div>
+            <div class="row">
+              <div class="col">{{ render_field(form.AssignedInfectionStaff) }}</div>  
+            </div> 
+          </div>
+          <div class="col-md-9">
+            <div class="row">
+              <div class="col">{{ render_field(form.Note, rows="10") }}</div>
+            </div> 
+          </div>
+        </div>
+      </div>
+
+
+
+      <div class="border border-info rounded bg-light p-3 mb-3">
+        <h2 id="edit-patient-person-information">Person Information</h2>
+
+        <div class="card border-info mt-3 mb-3">
+          <div class="card-header"><b>Current Information</b></div>
+          <div class="card-body">
+            <div class="row">
+              {{ render_field(form.PersonID) }}
+              {{ render_field(form.FirstName, class_="col") }}
+              {{ render_field(form.DisabledLastName, class_="col", disabled=True) }}
+              {{ render_field(form.DisabledSSN, class_="col", disabled=True) }}
+            </div>
+            <div class="row">
+              {{ render_field(form.Phone, class_="col") }}
+              {{ render_field(form.Email, class_="col") }}
+              {{ render_field(form.DOB, class_="col", field_class="render-datepicker") }}
+              {{ render_field(form.DOD, class_="col", field_class="render-datepicker") }}
+              {{ render_field(form.PersonType, class_="col") }}
+              {{ render_field(form.Sta3n, class_="col") }}
+            </div>
+            <div class="row">
+              {{ render_field(form.StreetAddress, class_="col") }}
+              {{ render_field(form.City, class_="col") }} 
+            </div>
+            <div class="row">
+              {{ render_field(form.County, class_="col") }}
+              {{ render_field(form.State, class_="col") }}
+              {{ render_field(form.Zip, class_="col") }}
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-info mt-3 mb-3">
+          <div class="card-header">
+            <b>
+              Information from VISTA
+            </b>
+          </div>
+          <div class="card-body">
+              {% if result["PersonCDW"] %}
+              <div class="row">
+                <div class="col"><p>Street Address</p></div>
+                <div class="col"><p>City</p></div>
+                <div class="col"><p>County</p></div>
+                <div class="col"><p>State</p></div>
+                <div class="col"><p>Zip</p></div>
+              </div>
+              <div class="row">
+                <div class="col"><p>{{result["PersonCDW"]["StreetAddress"]}}</p></div>
+                <div class="col"><p>{{result["PersonCDW"]["City"]}}</p></div>
+                <div class="col"><p>{{result["PersonCDW"]["County"]}}</p></div>
+                <div class="col"><p>{{result["PersonCDW"]["State"]}}</p></div>
+                <div class="col"><p>{{result["PersonCDW"]["Zip"]}}</p></div> 
+              </div>
+              {% else %}
+                No Results
+              {% endif %}
+            </div>
+          </div>
+        </div>
+    
+
+
+      <div class="border border-info rounded bg-light p-3 mb-3">
+        <h2 id="edit-patient-if-patient">If Patient...</h2>
+        <div class="row">
+          {{ render_field(form.PtHospitalizedYN, class_="col") }}
+          {{ render_select2(form.PtCurrentLocationID, class_="col") }}
+          {{ render_field(form.PtHighComplicationRiskYN, class_="col") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.PtVABostonPCPYN, class_="col") }}
+          {{ render_field(form.PtPCPName, class_="col") }}
+          {{ render_field(form.PtPCPPhone, class_="col") }}
+        </div>
+      </div>
+
+      <div class="border border-info rounded bg-light p-3 mb-3">
+        <h2 id="edit-patient-if-employee">If Employee...</h2>
+        <div class="row">
+          {{ render_field(form.EmplSupervisorName, class_="col") }}
+          {{ render_field(form.EmplSupervisorPhone, class_="col") }}
+          {{ render_field(form.EmplSupervisorNotifiedYN, class_="col") }}
+          {{ render_field(form.EmplIDNotifiedYN, class_="col") }}
+          {{ render_field(form.EmplEmployeeRole, class_="col") }}
+        </div>
+        <div class="row">
+          {{ render_select2(form.EmplCampus, class_="col") }}
+          {{ render_field(form.EmplShiftSchedule, class_="col") }}
+          {{ render_select2(form.EmplWorkLocation, class_="col") }}
+          {{ render_field(form.EmplPatientInteractionYN, class_="col") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.EmplSXSExposureWorkStartDate, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.EmplSXSExposureWorkEndDate, class_="col", field_class="render-datepicker") }}
+        </div>
+      </div>
+
+      <div class="border border-info rounded bg-light p-3 mb-3">
+        <h2 id="edit-patient-contacted-status">Patient Contacted Status</h2>
+        <div class="card border-info mt-3 mb-3">
+          <div class="card-body">
+            <div class="row">
+              {{render_field(form.Contacted, class_="col")}}
+              {{render_field(form.Comment, class_="col-10", rows="3")}}
+            </div>
+          </div>
+        </div>
+        <div class="card border-info mt-3 mb-3">
+          <div class="card-header">
+            <b>
+              History
+            </b>
+          </div>
+          <div class="card-body">
+            {% if result["HistoricalContact"].shape[0] > 0 %}
+              <div class="row">
+                <div class="col"><b>Contacted</b></div>
+                <div class="col"><b>Comment</b></div>
+                <div class="col"><b>UpdatedBy</b></div>
+                <div class="col"><b>UpdatedDateTime</b></div>
+              </div>
+              {% for _, row in result["HistoricalContact"].iterrows() %}
+                <div class="row">
+                  <div class="col"><p>{{row.Contacted}}</p></div>
+                  <div class="col"><p>{{row.Comment}}</p></div>
+                  <div class="col"><p>{{row.UpdatedBy}}</p></div>
+                  <div class="col"><p>{{row.UpdatedDateTime}}</p></div> 
+                </div>
+              {% endfor %}
+            {% else %}
+              No Results
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+
+
+      
+
+      <div class="border border-info rounded bg-light p-3 mb-3">
+        <h2 id="edit-patient-test-information">Test Information <a style="font-size:28px">(</a><a style="font-size:25px" href="/dashboard/patient_detail?PersonID={{form.PersonID.data}}#test-results" target="_blank">Details</a><a style="font-size:28px">)</a></h2>
+        <div class="card border-info mt-3 mb-3">
+          <div class="card-header">
+            <b>
+              Tests from VISTA
+            </b>
+          </div>
+          <div class="card-body">
+            {% if result["TestCDW"].shape[0] > 0 %}
+              <div class="row">
+                <div class="col"><p>Test Date</p></div>
+                <div class="col"><p>Testing Location</p></div>
+                <div class="col"><p>Test Result</p></div>
+                <div class="col"><p>Orderable Name</p></div>
+                <div class="col"><p>Lab Name</p></div>
+                <div class="col"><p>Source</p></div>
+                <div class="col"><p> </p></div>
+              </div>
+              {% for _, row in result["TestCDW"].iterrows() %}
+                <div class="row">
+                  <div class="col"><p>{{row.TestDateTime}}</p></div>
+                  <div class="col"><p>{{row.TestLocation}}</p></div>
+                  <div class="col"><p>{{row.TestResult}}</p></div>
+                  <div class="col"><p>{{row.OrderableItemName}}</p></div>
+                  <div class="col"><p>{{row.LabChemTestName}}</p></div>
+                  <div class="col"><p>{{row.Source}}</p></div>
+                  <div class="col">
+                    {% set date = row.TestDateTime|string%}
+                    <a href="javascript:add_result('{{date[:10]}}', '{{row.TestLocation}}', '{{row.TestResult}}')">Add to COVID Status</a>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              No Results
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card border-info">
+          <div class="card-header"><b>COVID Status (including status changes arising from tests outside the VA)</b></div>
+          <div class="card-body">
+            <p>D = Number of days since first positive test<br>
+               C = Number of consecutive negative tests since last positive test</p>
+            <div class="row">
+              <div class="col"><p>Test Date</p></div>
+              <div class="col"><p>Testing Location</p></div>
+              <div class="col"><p>Test Result</p></div>
+              <div class="col"><p>COVID Status</p></div>
+              <div class="col-1"><p>D</p></div>
+              <div class="col-1"><p>C</p></div>
+              <div class="col"><p>Assigned Provider</p></div>
+              <div class="col"><p>Drive Thru Needed</p></div>
+              <div class="col-1"><p> </p></div>
+            </div>
+            <div id="TestTableContainer">
+              <div class="row" id="TestRow1">
+                {{ render_field(form.TestDate1, label_visible=False, id="TestDate1", class_="col", field_class="render-datepicker TestDate") }}
+                {{ render_select2(form.TestLocation1, label_visible=False, id="TestLocation1", class_="col") }}
+                {{ render_field(form.TestResult1, label_visible=False, id = "TestResult1", class_="col", field_class="TestResult") }}
+                {{ render_field(form.CovidStatus1, label_visible=False, id = "CovidStatus1", class_="col") }}
+                {{ render_field(form.DisabledNumOfDaysSinceSinceFirstPos1, label_visible=False, id = "NumOfDaysSinceFirstPos1", readonly=True, class_="col-1", field_class="NumOfDaysSinceFirstPos") }}
+                {{ render_field(form.NumOfConsecutiveNegTestSinceLastPos1, label_visible=False, id = "NumOfConsecutiveNegTestSinceLastPos1", readonly=True, class_="col-1", field_class="NumOfConsecutiveNegTestSinceLastPos") }}
+                {{ render_select2(form.AssignedProvider1, label_visible=False, id = "AssignedProvider1", class_="col") }}
+                {{ render_field(form.TestDriveThruNeededYN1, label_visible=False, id="TestDriveThruNeededYN1", class_="col") }}
+                <div class="col-1">
+                  <a href="javascript:remove_result('1')">x</a>
+                </div>
+              </div>
+              <div class="row" id="TestRow2">
+                {{ render_field(form.TestDate2, label_visible=False, id="TestDate2", class_="col", field_class="render-datepicker TestDate") }}
+                {{ render_select2(form.TestLocation2, label_visible=False, id="TestLocation2", class_="col") }}
+                {{ render_field(form.TestResult2, label_visible=False, id = "TestResult2", class_="col", field_class="TestResult") }}
+                {{ render_field(form.CovidStatus2, label_visible=False, id = "CovidStatus2", class_="col") }}
+                {{ render_field(form.DisabledNumOfDaysSinceSinceFirstPos2, label_visible=False, id = "NumOfDaysSinceFirstPos2", readonly=True, class_="col-1", field_class="NumOfDaysSinceFirstPos") }}
+                {{ render_field(form.NumOfConsecutiveNegTestSinceLastPos2, label_visible=False, id = "NumOfConsecutiveNegTestSinceLastPos2", readonly=True, class_="col-1", field_class="NumOfConsecutiveNegTestSinceLastPos") }}
+                {{ render_select2(form.AssignedProvider2, label_visible=False, id = "AssignedProvider2", class_="col") }}
+                {{ render_field(form.TestDriveThruNeededYN2, label_visible=False, id="TestDriveThruNeededYN2", class_="col") }}
+                <div class="col-1">
+                  <a href="javascript:remove_result('2')">x</a>
+                </div>
+              </div>
+              <div class="row" id="TestRow3">
+                {{ render_field(form.TestDate3, label_visible=False, id="TestDate3", class_="col", field_class="render-datepicker TestDate") }}
+                {{ render_select2(form.TestLocation3, label_visible=False, id="TestLocation3", class_="col") }}
+                {{ render_field(form.TestResult3, label_visible=False, id = "TestResult3", class_="col", field_class="TestResult") }}
+                {{ render_field(form.CovidStatus3, label_visible=False, id = "CovidStatus3", class_="col") }}
+                {{ render_field(form.DisabledNumOfDaysSinceSinceFirstPos3, label_visible=False, id = "NumOfDaysSinceFirstPos3", readonly=True, class_="col-1", field_class="NumOfDaysSinceFirstPos") }}
+                {{ render_field(form.NumOfConsecutiveNegTestSinceLastPos3, label_visible=False, id = "NumOfConsecutiveNegTestSinceLastPos3", readonly=True, class_="col-1", field_class="NumOfConsecutiveNegTestSinceLastPos") }}
+                {{ render_select2(form.AssignedProvider3, label_visible=False, id = "AssignedProvider3", class_="col") }}
+                {{ render_field(form.TestDriveThruNeededYN3, label_visible=False, id="TestDriveThruNeededYN3", class_="col") }}
+                <div class="col-1">
+                  <a href="javascript:remove_result('3')">x</a>
+                </div>
+              </div>
+              <div class="row" id="TestRow4">
+                {{ render_field(form.TestDate4, label_visible=False, id="TestDate4", class_="col", field_class="render-datepicker TestDate") }}
+                {{ render_select2(form.TestLocation4, label_visible=False, id="TestLocation4", class_="col") }}
+                {{ render_field(form.TestResult4, label_visible=False, id = "TestResult4", class_="col", field_class="TestResult") }}
+                {{ render_field(form.CovidStatus4, label_visible=False, id = "CovidStatus4", class_="col") }}
+                {{ render_field(form.DisabledNumOfDaysSinceSinceFirstPos4, label_visible=False, id = "NumOfDaysSinceFirstPos4", readonly=True, class_="col-1", field_class="NumOfDaysSinceFirstPos") }}
+                {{ render_field(form.NumOfConsecutiveNegTestSinceLastPos4, label_visible=False, id = "NumOfConsecutiveNegTestSinceLastPos4", readonly=True, class_="col-1", field_class="NumOfConsecutiveNegTestSinceLastPos") }}
+                {{ render_select2(form.AssignedProvider4, label_visible=False, id = "AssignedProvider4", class_="col") }}
+                {{ render_field(form.TestDriveThruNeededYN4, label_visible=False, id="TestDriveThruNeededYN4", class_="col") }}
+                <div class="col-1">
+                  <a href="javascript:remove_result('4')">x</a>
+                </div>
+              </div>
+              <div class="row" id="TestRow5">
+                {{ render_field(form.TestDate5, label_visible=False, id="TestDate5", class_="col", field_class="render-datepicker TestDate") }}
+                {{ render_select2(form.TestLocation5, label_visible=False, id="TestLocation5", class_="col") }}
+                {{ render_field(form.TestResult5, label_visible=False, id = "TestResult5", class_="col", field_class="TestResult") }}
+                {{ render_field(form.CovidStatus5, label_visible=False, id = "CovidStatus5", class_="col") }}
+                {{ render_field(form.DisabledNumOfDaysSinceSinceFirstPos5, label_visible=False, id = "NumOfDaysSinceFirstPos5", readonly=True, class_="col-1", field_class="NumOfDaysSinceFirstPos") }}
+                {{ render_field(form.NumOfConsecutiveNegTestSinceLastPos5, label_visible=False, id = "NumOfConsecutiveNegTestSinceLastPos5", readonly=True, class_="col-1", field_class="NumOfConsecutiveNegTestSinceLastPos") }}
+                {{ render_select2(form.AssignedProvider5, label_visible=False, id = "AssignedProvider5", class_="col") }}
+                {{ render_field(form.TestDriveThruNeededYN5, label_visible=False, id="TestDriveThruNeededYN5", class_="col") }}
+                <div class="col-1">
+                  <a href="javascript:remove_result('5')">x</a>
+                </div>
+              </div>
+              <div class="row" id="TestRow6">
+                {{ render_field(form.TestDate6, label_visible=False, id="TestDate6", class_="col", field_class="render-datepicker TestDate") }}
+                {{ render_select2(form.TestLocation6, label_visible=False, id="TestLocation6", class_="col") }}
+                {{ render_field(form.TestResult6, label_visible=False, id = "TestResult6", class_="col", field_class="TestResult") }}
+                {{ render_field(form.CovidStatus6, label_visible=False, id = "CovidStatus6", class_="col") }}
+                {{ render_field(form.DisabledNumOfDaysSinceSinceFirstPos6, label_visible=False, id = "NumOfDaysSinceFirstPos6", readonly=True, class_="col-1", field_class="NumOfDaysSinceFirstPos") }}
+                {{ render_field(form.NumOfConsecutiveNegTestSinceLastPos6, label_visible=False, id = "NumOfConsecutiveNegTestSinceLastPos6", readonly=True, class_="col-1", field_class="NumOfConsecutiveNegTestSinceLastPos") }}
+                {{ render_select2(form.AssignedProvider6, label_visible=False, id = "AssignedProvider6", class_="col") }}
+                {{ render_field(form.TestDriveThruNeededYN6, label_visible=False, id="TestDriveThruNeededYN6", class_="col") }}
+                <div class="col-1">
+                  <a href="javascript:remove_result('6')">x</a>
+                </div>
+              </div>
+              <div class="row" id="TestRow7">
+                {{ render_field(form.TestDate7, label_visible=False, id="TestDate7", class_="col", field_class="render-datepicker TestDate") }}
+                {{ render_select2(form.TestLocation7, label_visible=False, id="TestLocation7", class_="col") }}
+                {{ render_field(form.TestResult7, label_visible=False, id = "TestResult7", class_="col", field_class="TestResult") }}
+                {{ render_field(form.CovidStatus7, label_visible=False, id = "CovidStatus7", class_="col") }}
+                {{ render_field(form.DisabledNumOfDaysSinceSinceFirstPos7, label_visible=False, id = "NumOfDaysSinceFirstPos7", readonly=True, class_="col-1", field_class="NumOfDaysSinceFirstPos") }}
+                {{ render_field(form.NumOfConsecutiveNegTestSinceLastPos7, label_visible=False, id = "NumOfConsecutiveNegTestSinceLastPos7", readonly=True, class_="col-1", field_class="NumOfConsecutiveNegTestSinceLastPos") }}
+                {{ render_select2(form.AssignedProvider7, label_visible=False, id = "AssignedProvider7", class_="col") }}
+                {{ render_field(form.TestDriveThruNeededYN7, label_visible=False, id="TestDriveThruNeededYN7", class_="col") }}
+                <div class="col-1">
+                  <a href="javascript:remove_result('7')">x</a>
+                </div>
+              </div>
+              <div class="row" id="TestRow8">
+                {{ render_field(form.TestDate8, label_visible=False, id="TestDate8", class_="col", field_class="render-datepicker TestDate") }}
+                {{ render_select2(form.TestLocation8, label_visible=False, id="TestLocation8", class_="col") }}
+                {{ render_field(form.TestResult8, label_visible=False, id = "TestResult8", class_="col", field_class="TestResult") }}
+                {{ render_field(form.CovidStatus8, label_visible=False, id = "CovidStatus8", class_="col") }}
+                {{ render_field(form.DisabledNumOfDaysSinceSinceFirstPos8, label_visible=False, id = "NumOfDaysSinceFirstPos8", readonly=True, class_="col-1", field_class="NumOfDaysSinceFirstPos") }}
+                {{ render_field(form.NumOfConsecutiveNegTestSinceLastPos8, label_visible=False, id = "NumOfConsecutiveNegTestSinceLastPos8", readonly=True, class_="col-1", field_class="NumOfConsecutiveNegTestSinceLastPos") }}
+                {{ render_select2(form.AssignedProvider8, label_visible=False, id = "AssignedProvider8", class_="col") }}
+                {{ render_field(form.TestDriveThruNeededYN8, label_visible=False, id="TestDriveThruNeededYN8", class_="col") }}
+                <div class="col-1">
+                  <a href="javascript:remove_result('8')">x</a>
+                </div>
+              </div>
+              <div class="row" id="TestRow9">
+                {{ render_field(form.TestDate9, label_visible=False, id="TestDate9", class_="col", field_class="render-datepicker TestDate") }}
+                {{ render_select2(form.TestLocation9, label_visible=False, id="TestLocation9", class_="col") }}
+                {{ render_field(form.TestResult9, label_visible=False, id = "TestResult9", class_="col", field_class="TestResult") }}
+                {{ render_field(form.CovidStatus9, label_visible=False, id = "CovidStatus9", class_="col") }}
+                {{ render_field(form.DisabledNumOfDaysSinceSinceFirstPos9, label_visible=False, id = "NumOfDaysSinceFirstPos9", readonly=True, class_="col-1", field_class="NumOfDaysSinceFirstPos") }}
+                {{ render_field(form.NumOfConsecutiveNegTestSinceLastPos9, label_visible=False, id = "NumOfConsecutiveNegTestSinceLastPos9", readonly=True, class_="col-1", field_class="NumOfConsecutiveNegTestSinceLastPos") }}
+                {{ render_select2(form.AssignedProvider9, label_visible=False, id = "AssignedProvider9", class_="col") }}
+                {{ render_field(form.TestDriveThruNeededYN9, label_visible=False, id="TestDriveThruNeededYN9", class_="col") }}
+                <div class="col-1">
+                  <a href="javascript:remove_result('9')">x</a>
+                </div>
+              </div>
+              <div class="row" id="TestRow10">
+                {{ render_field(form.TestDate10, label_visible=False, id="TestDate10", class_="col", field_class="render-datepicker TestDate") }}
+                {{ render_select2(form.TestLocation10, label_visible=False, id="TestLocation10", class_="col") }}
+                {{ render_field(form.TestResult10, label_visible=False, id = "TestResult10", class_="col", field_class="TestResult") }}
+                {{ render_field(form.CovidStatus10, label_visible=False, id = "CovidStatus10", class_="col") }}
+                {{ render_field(form.DisabledNumOfDaysSinceSinceFirstPos10, label_visible=False, id = "NumOfDaysSinceFirstPos10", readonly=True, class_="col-1", field_class="NumOfDaysSinceFirstPos") }}
+                {{ render_field(form.NumOfConsecutiveNegTestSinceLastPos10, label_visible=False, id = "NumOfConsecutiveNegTestSinceLastPos10", readonly=True, class_="col-1", field_class="NumOfConsecutiveNegTestSinceLastPos") }}
+                {{ render_select2(form.AssignedProvider10, label_visible=False, id = "AssignedProvider10", class_="col") }}
+                {{ render_field(form.TestDriveThruNeededYN10, label_visible=False ,id="TestDriveThruNeeded10", class_="col") }}
+                <div class="col-1">
+                  <a href="javascript:remove_result('10')">x</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="border border-info rounded bg-light p-3 mb-3">
+        <h2 id="edit-patient-quarantine">Quarantine/Return to Work Status</h2>
+        <div class="row">
+          <div class="col"><p>Quarantined?</p></div>
+          <div class="col"><p>Start Date</p></div>
+          <div class="col"><p>End Date</p></div>
+          <div class="col"><p>Symptom Tracker</p></div>
+          <div class="col"><p>Cleared for Work</p></div>
+          <div class="col"><p>Return to Work Date</p></div>
+        </div>
+        <div class="row">
+          {{ render_field(form.QuarantinedYN1, label_visible=False, class_="col") }}
+          {{ render_field(form.QuarantineStartDate1, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.QuarantineEndDate1, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.QuarantineSymptomTrackerYN1, label_visible=False, class_="col") }}
+          {{ render_field(form.EmplWorkClearedYN1, label_visible=False, class_="col") }}
+          {{ render_field(form.EmplReturnToWorkDate1, label_visible=False, class_="col", field_class="render-datepicker") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.QuarantinedYN2, label_visible=False, class_="col") }}
+          {{ render_field(form.QuarantineStartDate2, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.QuarantineEndDate2, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.QuarantineSymptomTrackerYN2, label_visible=False, class_="col") }}
+          {{ render_field(form.EmplWorkClearedYN2, label_visible=False, class_="col") }}
+          {{ render_field(form.EmplReturnToWorkDate2, label_visible=False, class_="col", field_class="render-datepicker") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.QuarantinedYN3, label_visible=False, class_="col") }}
+          {{ render_field(form.QuarantineStartDate3, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.QuarantineEndDate3, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.QuarantineSymptomTrackerYN3, label_visible=False, class_="col") }}
+          {{ render_field(form.EmplWorkClearedYN3, label_visible=False, class_="col") }}
+          {{ render_field(form.EmplReturnToWorkDate3, label_visible=False, class_="col", field_class="render-datepicker") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.QuarantinedYN4, label_visible=False, class_="col") }}
+          {{ render_field(form.QuarantineStartDate4, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.QuarantineEndDate4, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.QuarantineSymptomTrackerYN4, label_visible=False, class_="col") }}
+          {{ render_field(form.EmplWorkClearedYN4, label_visible=False, class_="col") }}
+          {{ render_field(form.EmplReturnToWorkDate4, label_visible=False, class_="col", field_class="render-datepicker") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.QuarantinedYN5, label_visible=False, class_="col") }}
+          {{ render_field(form.QuarantineStartDate5, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.QuarantineEndDate5, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.QuarantineSymptomTrackerYN5, label_visible=False, class_="col") }}
+          {{ render_field(form.EmplWorkClearedYN5, label_visible=False, class_="col") }}
+          {{ render_field(form.EmplReturnToWorkDate5, label_visible=False, class_="col", field_class="render-datepicker") }}
+        </div>
+      </div>
+
+      <div class="border border-info rounded bg-light p-3 mb-3">
+        <h2 id="edit-patient-location">Tracking location changes or hospitalizations outside of the VA</h2>
+        <div class="row">
+          <div class="col"><p>Date of new location or date of discharge</p></div>
+          <div class="col"><p>New Location</p></div>
+        </div>
+        <div class="row">
+          {{ render_field(form.LocationChangeDateTime1, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_select2(form.LocationChangeNewLocationID1, label_visible=False, class_="col") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.LocationChangeDateTime2, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_select2(form.LocationChangeNewLocationID2, label_visible=False, class_="col") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.LocationChangeDateTime3, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_select2(form.LocationChangeNewLocationID3, label_visible=False, class_="col") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.LocationChangeDateTime4, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_select2(form.LocationChangeNewLocationID4, label_visible=False, class_="col") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.LocationChangeDateTime5, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_select2(form.LocationChangeNewLocationID5, label_visible=False, class_="col") }}
+        </div>
+      </div>
+
+      <div class="border border-info rounded bg-light p-3 mb-3">
+        <h2 id="edit-patient-exposure">Exposure</h2>
+        <div class="row">
+          {{ render_field(form.ExposureDate1, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.ExposureType1, class_="col") }}
+          {{ render_select2(form.ExposureLocation1, class_="col") }}
+          {{ render_field(form.ExposureDetails1, class_="col") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.ExposureDate2, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.ExposureType2, class_="col") }}
+          {{ render_select2(form.ExposureLocation2, class_="col") }}
+          {{ render_field(form.ExposureDetails2, class_="col") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.ExposureDate3, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.ExposureType3, class_="col") }}
+          {{ render_select2(form.ExposureLocation3, class_="col") }}
+          {{ render_field(form.ExposureDetails3, class_="col") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.ExposureDate4, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.ExposureType4, class_="col") }}
+          {{ render_select2(form.ExposureLocation4, class_="col") }}
+          {{ render_field(form.ExposureDetails4, class_="col") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.ExposureDate5, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.ExposureType5, class_="col") }}
+          {{ render_select2(form.ExposureLocation5, class_="col") }}
+          {{ render_field(form.ExposureDetails5, class_="col") }}
+        </div>
+      </div>
+
+      <div class="border border-info rounded bg-light p-3 mb-3">
+        <h2 id="edit-patient-symptoms">Symptoms</h2>
+        <div class="row">
+          <div class="col"><p>Symptom Onset Date</p></div>
+          <div class="col"><p>Symptom Resolution Date </p></div>
+          <div class="col"><p>Onset Location</p></div>
+          <div class="col"><p>Resolution Location</p></div>
+          <div class="col-2"><p>Symptom</p></div>
+          <div class="col-4"><p>Symptom Note</p></div>
+        </div>
+        <div class="row">
+          {{ render_field(form.SymptomOnsetDate1, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.SymptomResolutionDate1, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_select2(form.SymptomOnsetLocationID1, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomResolutionLocationID1, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomType1, label_visible=False, class_="col-2", multiple="multiple") }}
+          {{ render_field(form.SymptomNote1, label_visible=False, class_="col-4") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.SymptomOnsetDate2, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.SymptomResolutionDate2, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_select2(form.SymptomOnsetLocationID2, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomResolutionLocationID2, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomType2, label_visible=False, class_="col-2", multiple="multiple") }}
+          {{ render_field(form.SymptomNote2, label_visible=False, class_="col-4") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.SymptomOnsetDate3, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.SymptomResolutionDate3, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_select2(form.SymptomOnsetLocationID3, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomResolutionLocationID3, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomType3, label_visible=False, class_="col-2", multiple="multiple") }}
+          {{ render_field(form.SymptomNote3, label_visible=False, class_="col-4") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.SymptomOnsetDate4, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.SymptomResolutionDate4, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_select2(form.SymptomOnsetLocationID4, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomResolutionLocationID4, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomType4, label_visible=False, class_="col-2", multiple="multiple") }}
+          {{ render_field(form.SymptomNote4, label_visible=False, class_="col-4") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.SymptomOnsetDate5, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.SymptomResolutionDate5, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_select2(form.SymptomOnsetLocationID5, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomResolutionLocationID5, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomType5, label_visible=False, class_="col-2", multiple="multiple") }}
+          {{ render_field(form.SymptomNote5, label_visible=False, class_="col-4") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.SymptomOnsetDate6, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.SymptomResolutionDate6, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_select2(form.SymptomOnsetLocationID6, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomResolutionLocationID6, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomType6, label_visible=False, class_="col-2", multiple="multiple") }}
+          {{ render_field(form.SymptomNote6, label_visible=False, class_="col-4") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.SymptomOnsetDate7, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.SymptomResolutionDate7, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_select2(form.SymptomOnsetLocationID7, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomResolutionLocationID7, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomType7, label_visible=False, class_="col-2", multiple="multiple") }}
+          {{ render_field(form.SymptomNote7, label_visible=False, class_="col-4") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.SymptomOnsetDate8, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.SymptomResolutionDate8, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_select2(form.SymptomOnsetLocationID8, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomResolutionLocationID8, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomType8, label_visible=False, class_="col-2", multiple="multiple") }}
+          {{ render_field(form.SymptomNote8, label_visible=False, class_="col-4") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.SymptomOnsetDate9, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.SymptomResolutionDate9, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_select2(form.SymptomOnsetLocationID9, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomResolutionLocationID9, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomType9, label_visible=False, class_="col-2", multiple="multiple") }}
+          {{ render_field(form.SymptomNote9, label_visible=False, class_="col-4") }}
+        </div>
+        <div class="row">
+          {{ render_field(form.SymptomOnsetDate10, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_field(form.SymptomResolutionDate10, label_visible=False, class_="col", field_class="render-datepicker") }}
+          {{ render_select2(form.SymptomOnsetLocationID10, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomResolutionLocationID10, label_visible=False, class_="col") }}
+          {{ render_select2(form.SymptomType10, label_visible=False, class_="col-2", multiple="multiple") }}
+          {{ render_field(form.SymptomNote10, label_visible=False, class_="col-4") }}
+        </div>
+      </div>
+
+       <div class="border border-info rounded bg-light p-3 mb-3">
+        <h2 id="edit-patient-study">Study</h2>
+        <div class="row">
+          {{ render_field(form.PartOfStudyYN, class_="col") }}
+          {{ render_field(form.StudyDetails, class_="col") }}
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col">
+          <button type="submit" class="btn btn-primary w-100">Update</button>
+        </div>
+      </div>
+      
+  </div>
+  </div>
+  </form>
+
+{% endblock %}
+
+{% block javascript %}
+
+  <!-- ScrollSpy initialization -->
+  <script type="text/javascript">
+    $(document).ready(function() {
+      $('body').css({"position": "relative"});
+      $('body').scrollspy({ target: '#edit-patient-list' })
+    })
+  </script>
+
+  <!-- Add result and result sorting functions -->
+  <script type="text/javascript">
+    // Find first empty Covid Status row.
+    function find_empty_result_row_number() {
+      var i;
+      for (i = 1; i <= 10; i++) {
+        var all_empty = true;
+        if ($("#TestDate" + i).datepicker("getDate") != null) { all_empty = false; }
+        if ($("#TestLocation" + i).val() != "") { all_empty = false; }
+        if ($("#TestResult" + i).val() != "") { all_empty = false; }
+        if ($("#TestDriveThruNeededYN" + i).val() != "") { all_empty = false; }
+        if ($("#CovidStatus" + i).val() != "") { all_empty = false; }
+        if ($("#AssignedProvider" + i).val() != "") { all_empty = false; }
+        if (($("#NumOfConsecutiveNegTestSinceLastPos" + i).val() != "") &&
+            ($("#NumOfConsecutiveNegTestSinceLastPos" + i).val() != "0")) { all_empty = false; }
+        if (all_empty) {
+          break;
+        }
+      }
+      if (i == 11) {
+        return -1;
+      } else {
+        return i;
+      }
+    }
+
+    function add_result(test_date, test_location, test_result) {
+      // Find the first empty row to fill in.
+      var rn = find_empty_result_row_number();
+      if (rn == -1) {
+        alert("There are no empty COVID status rows. Please consolidate " +
+              "previous COVID status updates and/or contact the " +
+              "administrators and ask them to add additional status fields.");
+        return false;
+      }
+
+      // Fill in the test date and result.
+      $("#TestDate" + rn).datepicker("update", test_date); 
+      $('#TestResult' + rn).val(test_result);
+
+      // Fill in the test location, creating a new option if necessary. This is
+      // adapted from the official select2 documentation.
+      var data = {id: test_location, text: test_location};
+      if ($('#TestLocation' + rn).find("option[value='" + test_location + "']").length > 0) {
+        $('#TestLocation' + rn).val(test_location).trigger('change');
+      } else { 
+        // Create a DOM Option and pre-select by default
+        var newOption = new Option(test_location, test_location, true, true);
+
+        // Append it to the select
+        $('#TestLocation' + rn).append(newOption).trigger('change');
+      } 
+
+      return false;
+    }
+
+    function remove_result(rn){
+      // Fill the row empty values based on row number (rn)
+      $("#TestDate" + rn).datepicker("update", ""); 
+      $('#TestResult' + rn).val("");
+      $('#CovidStatus' + rn).val("");
+      $('#TestLocation' + rn).val("").trigger('change');
+      $('#AssignedProvider' + rn).val("").trigger('change');
+      $('#TestDriveThruNeededYN' + rn).val("");
+      return false;
+    }
+
+    // Define function to return an array of rows of the COVID status table,
+    // sorted by result date.
+    function get_sorted_result_rows() {
+      var dates = [];
+      for (var i = 0; i < 10; i++) {
+        dates.push($('#TestDate' + (i+1)).datepicker("getDate"));
+      }
+
+      var indices = [];
+      for (var i = 0; i < 10; i++) {
+        indices.push(i);
+      }
+
+      indices.sort(function(i, j) {
+        var di = dates[i];
+        var dj = dates[j];
+        if (di == null) { di = new Date(2999, 1, 1); }
+        if (dj == null) { dj = new Date(2999, 1, 1); }
+        return di - dj;
+      });
+      
+      var rows = [];
+      for (var i = 0; i < 10; i++) {
+        var j = indices[i];
+        rows.push($('#TestRow' + (j+1)));
+      }
+
+      return rows;
+    }
+
+    // Define function to sort rows of the COVID status table by result date
+    // when one of the result dates changes.
+    function sort_result_rows() {
+      var rows = get_sorted_result_rows();
+      var $parent = $("#TestTableContainer");
+      for (var i = 0; i < 10; i++) {
+        $parent.append(rows[i]);
+      }
+    }
+
+    function calculate_D_and_C() {
+      // D = Number of days since first positive test
+      // C = Number of consecutive negative tests since last positive test
+
+      // Get the rows of the table, sorted by ascending date.
+      var rows = get_sorted_result_rows();
+      var N = rows.length;
+      
+      
+      // Extract test dates and results, sorted by ascending date.
+      var test_dates = [];
+      var test_results = [];
+      for (var i = 0; i < N; i++) {
+        test_dates.push(rows[i].find('input[id^="TestDate"]').datepicker("getDate"));
+        test_results.push(rows[i].find('select[id^="TestResult"]').val());
+      }
+      
+      // Find date of first positive test (if any).
+      var date_of_first_positive = null;
+      for (var i = 0; i < N; i++) {
+        if (test_results[i] == "Positive") {
+          date_of_first_positive = test_dates[i];
+          break;
+        }
+      }
+
+      // Calculate D.
+      var Ds = [];
+      for (var i = 0; i < N; i++) {
+        var d1 = date_of_first_positive;
+        var d2 = test_dates[i];
+        var one_day = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
+        var diff_days = Math.round((d2 - d1) / one_day);
+        var D;
+        if (diff_days < 0) {
+          D = "";
+        } else {
+          D = "" + diff_days;
+        }
+
+        if (test_dates[i] != null && test_results[i] != "Pending"){
+          Ds.push(D);
+        } else {
+          Ds.push("");
+        }
+      }
+
+      // Calculate C.
+      var Cs = [];
+      var C = "";
+      for (var i = 0; i < N; i++) {
+        if (test_results[i] == "Positive") {
+          C = 0;
+        } else if (test_results[i] == "Negative") {
+          C++;
+        } else {
+          // Do nothing
+        }
+
+        if ((test_dates[i] != null && test_dates[i] > date_of_first_positive && test_results[i] != "Pending" && test_results[i] != "Positive")) {
+          Cs.push(C);
+        } else {
+          Cs.push("");
+        }
+      }
+      
+      // Fill in D and C.
+      for (var i = 0; i < N; i++) {
+          //Only if there was a first positive
+        if(date_of_first_positive) { 
+          $(rows[i]).find('input[id^="NumOfDaysSinceFirstPos"]').val(Ds[i]);
+          $(rows[i]).find('input[id^="NumOfConsecutiveNegTestSinceLastPos"]').val(Cs[i]);
+        } else {
+          $(rows[i]).find('input[id^="NumOfDaysSinceFirstPos"]').val("");
+          $(rows[i]).find('input[id^="NumOfConsecutiveNegTestSinceLastPos"]').val("");
+        }
+      }
+    }
+
+    // Add event handlers.
+    $(document).ready(function() {
+      function f() {
+        sort_result_rows();
+        calculate_D_and_C();
+      }
+      f();
+      $("input[id^='TestDate']").change(f);
+      $("select[id^='TestResult']").change(f);
+    });
+    
+  </script>
+
+{% endblock %}

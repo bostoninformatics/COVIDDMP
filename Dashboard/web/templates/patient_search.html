@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block header %}
+  Patient Search
+{% endblock %}
+
+{% block content %}
+
+<h1>COVID Patient Search</h1>
+<p>This page displays patients who have been diagnosed, tested, or under investigation for COVID.</p>
+
+<div class="row">
+  <div class="col-9">
+    <div class="border border-info rounded bg-light p-3">
+      <form method="get" onchange="this.submit()" autocomplete="off">
+        <div class="form-row">
+          <div class="col">
+            <div class="form-group">
+              <label>{{ form.SSN4.label }}</label>
+              {{ form.SSN4(class_="form-control") }}
+            </div>
+          </div>
+          <div class="col">
+            <div class="form-group">
+              <label>{{ form.LastName.label }}</label>
+              {{ form.LastName(class_="form-control") }}
+            </div>
+          </div>
+          <div class="col">
+            <div class="form-group">
+              <label>{{ form.FirstName.label }}</label>
+              {{ form.FirstName(class_="form-control") }}
+            </div>
+          </div>
+          <div class="col">
+            <div class="form-group">
+              <label>{{ form.PersonType.label }}</label>
+              {{ form.PersonType(class_="form-control") }}
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="col">
+            <div class="form-group">
+              <label>{{ form.Sta3n.label }}</label>
+              {{ form.Sta3n(class_="form-control") }}
+            </div>
+          </div>
+          <div class="col">
+            <div class="form-group">
+              <label>{{ form.AdmitStatus.label }}</label>
+              {{ form.AdmitStatus(class_="form-control") }}
+            </div>
+          </div>
+          <div class="col">
+            <div class="form-group">
+              <label>{{ form.MostRecentTestResult.label }}</label>
+              {{ form.MostRecentTestResult(class_="form-control") }}
+            </div>
+          </div>
+          
+          <div class="col">
+            <div class="form-group">
+              <label>{{ form.MostRecentTestDateLo.label }}</label>
+              {{ form.MostRecentTestDateLo(class_="form-control render-datepicker") }}
+            </div>
+          </div> 
+          
+         <div class="col">
+            <div class="form-group">
+              <label>{{ form.MostRecentTestDateHi.label }}</label>
+              {{ form.MostRecentTestDateHi(class_="form-control render-datepicker") }}
+            </div>
+          </div> 
+              
+          <div class="col">
+            <div class="form-group">
+              <label>{{ form.Contacted.label }}</label>
+              {{ form.Contacted(class_="form-control") }}
+            </div>
+          </div>
+        </div>
+        {% if person_type == "Patient" %} 
+          <div class="form-row">
+            <div class="col">
+              <div class="form-group">
+                <label>{{ form.InstitutionName.label }}</label>
+                {{ form.InstitutionName(class_="form-control select2") }}
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label>{{ form.WardLocationName.label }}</label>
+                {{ form.WardLocationName(class_="form-control select2") }}
+              </div>
+            </div>
+          </div>
+        {% elif person_type == "Employee" %}  
+          <div class="form-row">
+            <div class="col">
+              <div class="form-group">
+                <label>{{ form.EmplCampus.label }}</label>
+                {{ form.EmplCampus(class_="form-control select2") }}
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label>{{ form.EmplWorkLocation.label }}</label>
+                {{ form.EmplWorkLocation(class_="form-control select2") }}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+        <div class="form-row">
+          <div class="col">
+            <button type="submit" class="btn btn-primary w-100">Search</button>
+          </div>
+        {% if is_auth_for_csv %}
+          <div class="col">
+            <button type="submit" formaction="/dashboard/patient_csv" formmethod="get" formtarget="_blank"
+              class="btn btn-primary w-100">Export search as .csv</button>
+          </div>
+         {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-3">
+    <div class="border border-info rounded bg-light">
+      <div class="table-responsive p-3">
+        <table cellspacing="0" class="table table-sm compact" style="width: 100%">
+          <thead>
+            <tr>
+              <th>Data Source</th>
+              <th>Last Updated Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for _, row in times.iterrows() %}
+            <tr>
+              <td>{{row.Source}}</td>
+              <td>{{row.UpdateTime[0:16]}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-3">
+  <table id="patient_search_table" class="render-datatable table table-sm"  data-order="[[ 4, &quot;desc&quot; ]]">
+    <thead>
+      <tr>
+        <th>SSN4</th>
+        <th>Last Name</th>
+        <th>First Name</th>
+        <th>Station</th>
+        <th>Most Recent Test Date</th>
+        <th>Most Recent Result</th>
+        <th>Person Type</th>
+        {% if person_type == "Patient" %}
+          <th>Institution</th>
+          <th>Ward</th>
+        {% elif person_type == "Employee" %} 
+          <th>Campus</th>
+          <th>Work Location</th> 
+          <th>Employee Role</th> 
+        {% endif %}
+        <th>Admission Status</th>
+        <th>PACT Provider</th>
+        <th>Contacted?</th>
+        <th>Tracked?</th>
+        <th>Detail</th>
+        <th>Edit</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for _, row in result.iterrows() %}
+      <tr>
+        <td>{{row.SSN4}}</td>
+        <td>{{row.LastName}}</td>
+        <td>{{row.FirstName}}</td>
+        <td>{{row.Sta3n}}</td>
+        <td>{{row.MostRecentTestDateTime}}</td>
+        <td>{{row.MostRecentTestResult}}</td>
+        <td>{{row.PersonType}}</td>
+        {% if person_type == "Patient" %}
+          <td>{{row.InstitutionName}}</td>
+          <td>{{row.WardLocationName}}</td>
+        {% elif person_type == "Employee" %} 
+          <td>{{row.EmplCampus}}</td>
+          <td>{{row.EmplWorkLocation}}</td> 
+          <td>{{row.EmplEmployeeRole}}</td> 
+        {% endif %}
+        <td>{{row.AdmitStatus}}</td>
+        <td>{{row.PACT_Provider}}</td>
+        <td align="center"
+            bgcolor="{%- if row.Contacted == "No" -%}lightcoral
+                     {%- elif row.Contacted == "Yes" -%}lightsteelblue
+                     {%- else -%}lightgray{%- endif -%}">
+          <a href="/dashboard/patient_contacted_status?PersonID={{row.PersonID}}&NextURL={{next_url}}"
+            title="Edit patient contacted status" style="color:white">{{row.Contacted}} &thinsp; <img border="0"
+              alt="edit status" src="/dashboard/static/pencil.png" width="16" height="15"></a>
+        </td>
+        <td align="center" bgcolor="{%- if row.Tracked == "No" -%}lightcoral
+                       {%- elif row.Tracked == "Yes" -%}lightsteelblue
+                       {%- else -%}lightgray{%- endif -%}">
+          <a href="/dashboard/patient_tracked_status?PersonID={{row.PersonID}}&NextURL={{next_url}}"
+            title="Edit patient tracked status" style="color:white">{{row.Tracked}} &thinsp; <img border="0"
+              alt="edit status" src="/dashboard/static/pencil.png" width="16" height="15"></a>
+        <td><a href="/dashboard/patient_detail?PersonID={{row.PersonID}}">Detail</a></td>
+        <td><a href="/dashboard/patient_edit?PersonID={{row.PersonID}}&NextURL={{next_url}}">Edit</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

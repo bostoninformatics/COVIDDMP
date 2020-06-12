@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block header %}
+ All Employees Without Retun-To-Work Date
+{% endblock %}
+
+{% block content %}
+
+  <div class="border border-info rounded bg-light p-3 mb-3"> 
+  <h2>All Employees Without Return-To-Work Date (Station = {{ request.args.get("Sta3n", default="523") }})</h2>
+    <div class="border border-info rounded bg-light p-3">
+        <form method="get" onchange="this.submit()">
+            <div class="form-row">
+                <div class="col">
+                    <div class="form-group">
+                        <label>{{ form.Sta3n.label }}</label>
+                        {{ form.Sta3n(class_="form-control") }}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                      <label>{{ form.SSN4.label }}</label>
+                      {{ form.SSN4(class_="form-control") }}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                      <label>{{ form.EmplWorkLocation.label }}</label>
+                      {{ form.EmplWorkLocation(class_="form-control select2") }}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                      <label>{{ form.MostRecentTestResult.label }}</label>
+                      {{ form.MostRecentTestResult(class_="form-control select2") }}
+                    </div>
+                  </div>
+            </div>
+            <div class="form-row">       
+                <div class="col">
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                </div>
+            </div>
+        </form>
+    </div>
+  </div>
+
+  <div class="mt-3">
+    <table id="patient_search_table" class="render-datatable table table-sm"  data-order="[[ 4, &quot;desc&quot; ]]">
+      <thead>
+        <tr>
+          <th>SSN4</th>
+          <th>Last Name</th>
+          <th>First Name</th>
+          <th>Station</th>          
+          <th>Work Location</th>
+          <th>Days Out</th>
+          <th>Quarantine Start Date</th>
+          <th>Most Recent Test Result</th>
+          <th>1st Pos Test Date</th>
+          <th>Most Recent COVID Status</th>
+          <th>Consecutive Negatives Since Last Pos</th>
+          <th>Assigned Provider</th>
+          <th>Edit</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for _, row in result.iterrows() %}
+        <tr>
+          <td>{{row.SSN4}}</td>
+          <td>{{row.LastName}}</td>
+          <td>{{row.FirstName}}</td>
+          <td>{{row.Sta3n}}</td>
+          <td>{{row.EmplWorkLocation}}</td>
+          <td>{{row.DaysOut}}</td>
+          <td>{{row.MostRecentQuarantineStartDate}}</td>
+          <td>{{row.MostRecentTestResult}}</td>
+          <td>{{row.FirstPositiveTestDate}}</td>
+          <td>{{row.MostRecentCovidStatus}}</td>
+          <td>{{row.MostRecentNumOfConsecutiveNegTestSinceLastPos}}</td> 
+          <td>{{row.MostRecentAssignedProvider}}</td>
+          <td><a href="/dashboard/patient_edit?PersonID={{row.PersonID}}&NextURL={{next_url}}">Edit</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  
+
+{% endblock %}

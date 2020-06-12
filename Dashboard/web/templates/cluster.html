@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  Cluster Information
+{% endblock %}
+
+{% block content %}
+<canvas id="chart-{{item["clusterid"]}}" width="100%" height="800"></canvas>
+<script>
+var ctx = document.getElementById("chart-{{item["clusterid"]}}");
+var data = {{result_data|tojson}};
+var specialty_labels = {{specialty_labels|tojson}};
+var my_chart = new Chart(ctx, {
+  type: "horizontalBar",
+  labels: specialty_labels,
+  data: data,
+  options: {
+    scales: {
+      xAxes: [{
+        ticks: {
+          maxRotation: 0, // angle in degrees
+          stepSize: 1,
+          autoSkip: false
+        },
+      }]
+    }
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  Provider Detail
+{% endblock %}
+
+{% block content %}
+  {{ result_tb.melt().to_html(border=0, classes=["render-datatable"])|safe }}
+{% endblock %}
